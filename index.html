@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Ration Card Finder (Turbo)</title>
+    <title>Link Generator Tool</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .container { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: auto; }
-        h2 { text-align: center; color: #d9534f; }
+        .container { max-width: 600px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: auto; }
+        h2 { text-align: center; color: #0056b3; }
         label { font-weight: bold; margin-top: 10px; display: block; }
         input { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; background: #d9534f; color: white; border: none; padding: 10px; font-size: 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #6c757d; }
-        #log-box { margin-top: 20px; padding: 10px; background: #222; color: #0f0; border-radius: 4px; height: 250px; overflow-y: auto; font-size: 13px; font-family: monospace; }
-        .success { color: green; font-weight: bold; font-size: 18px; margin-top: 15px; }
-        .link { display: block; margin-top: 10px; color: blue; text-decoration: underline; word-break: break-all; }
+        button { width: 100%; background: #0056b3; color: white; border: none; padding: 10px; font-size: 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .link-box { margin-top: 20px; padding: 10px; background: #e9ecef; border-radius: 4px; height: 400px; overflow-y: auto; }
+        .link-item { background: white; padding: 10px; border: 1px solid #ccc; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        a { color: #d9534f; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>⚡ टर्बो राशन कार्ड फाइंडर ⚡</h2>
+    <h2>🔗 राशन कार्ड डायरेक्ट लिंक जनरेटर</h2>
     
     <label>एप्लीकेशन ID (App ID):</label>
     <input type="text" id="appId" value="0919000960190621">
@@ -28,98 +28,57 @@
     <label>राशन कार्ड नंबर:</label>
     <input type="text" id="rcNum" value="219040822667">
 
-    <label>कहाँ तक चेक करना है? (Max):</label>
-    <input type="number" id="maxLimit" value="1500">
+    <label>शुरुआती नंबर (Start):</label>
+    <input type="number" id="startLimit" value="1">
 
-    <button id="startBtn" onclick="startSearch()">खोजना शुरू करें (Fast Mode)</button>
+    <label>कहाँ तक लिंक बनाने हैं? (End):</label>
+    <input type="number" id="endLimit" value="1500">
 
-    <div id="log-box">सिस्टम तैयार है...<br></div>
-    <div id="result"></div>
+    <button onclick="generateLinks()">सारे लिंक एक साथ जनरेट करें</button>
+
+    <div class="link-box" id="result-box">
+        लिंक्स यहाँ दिखाई देंगे...
+    </div>
 </div>
 
 <script>
-    let isRunning = false;
-
-    // एक सिंगल लिंक को चेक करने का फंक्शन
-    async function checkSingle(i, appId, rcNum, baseUrl) {
-        let fpsCode = String(i).padStart(8, '0');
-        let rawText = `${appId}#${fpsCode}#${rcNum}`;
-        let b64 = btoa(rawText);
-        let encodedDetails = encodeURIComponent(b64);
-        let fullUrl = baseUrl + encodedDetails;
-
-        // फास्ट प्रॉक्सी का इस्तेमाल (Corsproxy.io)
-        let proxyUrl = `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`;
-
-        try {
-            let response = await fetch(proxyUrl);
-            let text = await response.text();
-            
-            if (text.includes(rcNum)) {
-                return { found: true, index: i, url: fullUrl };
-            }
-        } catch (error) {
-            // एरर इग्नोर करें
-        }
-        return { found: false, index: i };
-    }
-
-    async function startSearch() {
+    function generateLinks() {
         let appId = document.getElementById("appId").value;
         let rcNum = document.getElementById("rcNum").value;
-        let maxLimit = parseInt(document.getElementById("maxLimit").value);
-        let logBox = document.getElementById("log-box");
-        let resultBox = document.getElementById("result");
-        let btn = document.getElementById("startBtn");
+        let startLimit = parseInt(document.getElementById("startLimit").value);
+        let endLimit = parseInt(document.getElementById("endLimit").value);
+        let resultBox = document.getElementById("result-box");
 
         if(!appId || !rcNum) {
             alert("कृपया सभी जानकारी भरें!");
             return;
         }
 
-        isRunning = true;
-        btn.disabled = true;
-        btn.innerText = "⚡ खोज चल रही है...";
-        logBox.innerHTML = "सुपरफास्ट मोड शुरू हो गया है...<br><br>";
-        resultBox.innerHTML = "";
-
-        const baseUrl = "https://nfsa.up.gov.in/Food/TrackingRationCard/ViewRC.aspx?Details=";
+        resultBox.innerHTML = "<span style='color:green;'>लिंक्स बन रहे हैं...</span>";
+        let htmlContent = "";
         
-        const batchSize = 10; // एक साथ 10 रिक्वेस्ट भेजेगा
+        const baseUrl = "https://nfsa.up.gov.in/Food/TrackingRationCard/ViewRC.aspx?Details=";
 
-        for (let i = 1; i <= maxLimit; i += batchSize) {
-            if (!isRunning) break;
+        for (let i = startLimit; i <= endLimit; i++) {
+            // यही वो लाइन है जो 232 को 00000232 बनाती है (8 अंकों का फॉर्मेट)
+            let fpsCode = String(i).padStart(8, '0'); 
+            
+            let rawText = `${appId}#${fpsCode}#${rcNum}`;
+            
+            // Base64 + URL Encode (जैसे आपने ऊपर बताया बिल्कुल वही फॉर्मेट)
+            let b64 = btoa(rawText);
+            let encodedDetails = encodeURIComponent(b64);
+            let fullUrl = baseUrl + encodedDetails;
 
-            logBox.innerHTML = `सीरियल <b>${i} से ${Math.min(i + batchSize - 1, maxLimit)}</b> एक साथ चेक हो रहे हैं...<br>` + logBox.innerHTML;
-
-            // 10 लिंक्स एक साथ तैयार करना
-            let promises = [];
-            for (let j = 0; j < batchSize && (i + j) <= maxLimit; j++) {
-                promises.push(checkSingle(i + j, appId, rcNum, baseUrl));
-            }
-
-            // 10 लिंक्स को एक ही समय (Parallel) पर सर्वर पर भेजना
-            let results = await Promise.all(promises);
-
-            // रिजल्ट चेक करना
-            for (let res of results) {
-                if (res.found) {
-                    logBox.innerHTML = `<span style="color: yellow;"><b>✅ सफलता! डेटा मिल गया।</b></span><br>` + logBox.innerHTML;
-                    resultBox.innerHTML = `
-                        <div class="success">✅ मैच मिल गया! कोटेदार कोड: ${res.index}</div>
-                        <a class="link" href="${res.url}" target="_blank">यहाँ क्लिक करके अपना राशन कार्ड खोलें</a>
-                    `;
-                    isRunning = false;
-                    break;
-                }
-            }
+            htmlContent += `
+                <div class="link-item">
+                    <span>सीरियल नंबर: <b>${fpsCode}</b></span>
+                    <a href="${fullUrl}" target="_blank">यहाँ क्लिक करके चेक करें ➔</a>
+                </div>
+            `;
         }
 
-        btn.disabled = false;
-        if(isRunning) {
-            logBox.innerHTML = `खोज पूरी हुई। कोई मैच नहीं मिला।<br>` + logBox.innerHTML;
-        }
-        btn.innerText = "खोजना शुरू करें (Fast Mode)";
+        resultBox.innerHTML = htmlContent;
     }
 </script>
 
