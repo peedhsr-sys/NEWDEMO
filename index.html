@@ -3,161 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Async Scanner - Pro</title>
+    <title>राशन कार्ड लिंक जनरेटर टूल</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2e; color: #cdd6f4; padding: 20px; }
-        .container { max-width: 600px; background: #313244; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin: auto; }
-        h2 { text-align: center; color: #f38ba8; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        label { font-weight: bold; margin-top: 15px; display: block; color: #a6adc8; font-size: 14px; }
-        input { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #45475a; border-radius: 6px; background: #1e1e2e; color: #cdd6f4; font-size: 16px; box-sizing: border-box; }
-        button { width: 100%; background: #a6e3a1; color: #11111b; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #94e2d5; }
-        button:disabled { background: #585b70; cursor: not-allowed; color: #a6adc8; }
-        .status-panel { margin-top: 20px; padding: 15px; background: #181825; border-radius: 8px; border: 1px solid #45475a; }
-        .log-box { height: 180px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; color: #f9e2af; margin-top: 10px; }
-        .success-box { background: #a6e3a1; color: #111; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; text-align: center; font-weight: bold; font-size: 18px; animation: popup 0.5s ease-in-out; }
-        .link-btn { display: inline-block; margin-top: 10px; padding: 10px 20px; background: #11111b; color: #a6e3a1; text-decoration: none; border-radius: 5px; border: 2px solid #a6e3a1; transition: 0.3s; }
-        .link-btn:hover { background: #a6e3a1; color: #11111b; }
-        @keyframes popup { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .live-stats { display: flex; justify-content: space-between; font-size: 14px; color: #bac2de; margin-bottom: 10px; border-bottom: 1px solid #45475a; padding-bottom: 5px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 650px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; }
+        h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
+        label { font-weight: bold; margin-top: 10px; display: block; color: #333; }
+        input { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        button { flex: 1; background: #0056b3; color: white; border: none; padding: 12px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #004494; }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        .btn-copy { background: #28a745; }
+        .btn-copy:hover { background: #218838; }
+        .link-box { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 5px; height: 400px; overflow-y: auto; border: 1px solid #ddd; }
+        .link-item { background: white; padding: 10px; border: 1px solid #ccc; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .link-item a { color: #d9534f; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .link-item a:hover { text-decoration: underline; }
+        .status { text-align: center; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚀 Advanced AI Auto-Scanner</h2>
+    <h2>🔗 राशन कार्ड डायरेक्ट लिंक जनरेटर</h2>
     
     <label>एप्लीकेशन ID (App ID):</label>
     <input type="text" id="appId" value="0919000960190621">
 
-    <label>राशन कार्ड नंबर (जो खोजना है):</label>
+    <label>राशन कार्ड नंबर:</label>
     <input type="text" id="rcNum" value="219040822667">
 
-    <label>कहाँ तक चेक करना है? (Max):</label>
-    <input type="number" id="maxLimit" value="1500">
-
-    <button id="startBtn" onclick="startScanner()">⚡ हाई-स्पीड स्कैनिंग शुरू करें</button>
-
-    <div class="status-panel">
-        <div class="live-stats">
-            <span id="stat-scanned">चेक किए गए: 0</span>
-            <span id="stat-active" style="color: #89b4fa;">एक्टिव थ्रेड्स: 0</span>
+    <div style="display: flex; gap: 15px;">
+        <div style="flex: 1;">
+            <label>शुरुआती नंबर (Start):</label>
+            <input type="number" id="startLimit" value="1">
         </div>
-        <div class="log-box" id="logBox">सिस्टम स्टैंडबाय मोड में है...</div>
+        <div style="flex: 1;">
+            <label>अंतिम नंबर (End):</label>
+            <input type="number" id="endLimit" value="1500">
+        </div>
     </div>
 
-    <div class="success-box" id="successBox">
-        <div id="successText"></div>
-        <a id="successLink" class="link-btn" href="#" target="_blank">राशन कार्ड खोलें ➔</a>
+    <div class="btn-group">
+        <button id="genBtn" onclick="generateLinks()">सारे लिंक जनरेट करें</button>
+        <button id="copyBtn" class="btn-copy" onclick="copyAllLinks()" disabled>सभी लिंक कॉपी करें</button>
+    </div>
+
+    <div class="status" id="statusMsg"></div>
+
+    <div class="link-box" id="result-box">
+        <span style="color: #666;">लिंक्स यहाँ दिखाई देंगे...</span>
     </div>
 </div>
 
 <script>
-    // Advanced Configuration
-    const CONCURRENCY_LIMIT = 20; // एक साथ 20 रिक्वेस्ट (दुनिया के सबसे फ़ास्ट ब्राउज़र स्क्रेपिंग का स्टैण्डर्ड)
-    let isFound = false;
-    let currentIndex = 1;
-    let maxLimit = 1500;
-    let scannedCount = 0;
-    let activeWorkers = 0;
+    let generatedLinksText = ""; // कॉपी करने के लिए सभी लिंक्स को स्टोर करने के लिए
 
-    async function checkLink(i, appId, rcNum, baseUrl) {
-        if (isFound) return; // अगर मिल गया है, तो बाकी रिक्वेस्ट तुरंत रुक जाएंगी
-        
-        activeWorkers++;
-        updateStats();
-
-        let fpsCode = String(i).padStart(8, '0');
-        let rawText = `${appId}#${fpsCode}#${rcNum}`;
-        let b64 = btoa(rawText);
-        let encodedDetails = encodeURIComponent(b64);
-        let fullUrl = baseUrl + encodedDetails;
-
-        // Bypassing Cache with random timestamp
-        let proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}&t=${Date.now()}`;
-
-        try {
-            document.getElementById('logBox').innerHTML = `सीरियल [${fpsCode}] स्कैन हो रहा है...<br>` + document.getElementById('logBox').innerHTML;
-            
-            let response = await fetch(proxyUrl, { cache: "no-store" });
-            let text = await response.text();
-            
-            scannedCount++;
-            
-            if (text.includes(rcNum)) {
-                isFound = true; // सिस्टम को पता चल गया कि डाटा मिल गया है
-                showSuccess(fpsCode, fullUrl);
-            }
-        } catch (error) {
-            // Error इग्नोर करें ताकि प्रोसेस रुके नहीं
-        } finally {
-            activeWorkers--;
-            updateStats();
-        }
-    }
-
-    // Worker Queue System (Advanced Async Algorithm)
-    async function worker(appId, rcNum, baseUrl) {
-        while (currentIndex <= maxLimit && !isFound) {
-            let i = currentIndex++;
-            await checkLink(i, appId, rcNum, baseUrl);
-        }
-    }
-
-    async function startScanner() {
+    function generateLinks() {
         let appId = document.getElementById("appId").value.trim();
         let rcNum = document.getElementById("rcNum").value.trim();
-        maxLimit = parseInt(document.getElementById("maxLimit").value);
-        let btn = document.getElementById("startBtn");
+        let startLimit = parseInt(document.getElementById("startLimit").value);
+        let endLimit = parseInt(document.getElementById("endLimit").value);
+        let resultBox = document.getElementById("result-box");
+        let statusMsg = document.getElementById("statusMsg");
+        let genBtn = document.getElementById("genBtn");
+        let copyBtn = document.getElementById("copyBtn");
 
-        if(!appId || !rcNum) return alert("कृपया सभी जानकारी भरें!");
-
-        // Reset Variables
-        isFound = false;
-        currentIndex = 1;
-        scannedCount = 0;
-        document.getElementById('logBox').innerHTML = "<span style='color:#a6e3a1;'>स्कैनिंग शुरू हो गई है... कृपया प्रतीक्षा करें!</span><br>";
-        document.getElementById('successBox').style.display = 'none';
-        btn.disabled = true;
-        btn.innerText = "स्कैनिंग चल रही है...";
-
-        const baseUrl = "https://nfsa.up.gov.in/Food/TrackingRationCard/ViewRC.aspx?Details=";
-        
-        let workers = [];
-        
-        // एक साथ 20 थ्रेड्स (Workers) चालू करना
-        for (let w = 0; w < CONCURRENCY_LIMIT; w++) {
-            workers.push(worker(appId, rcNum, baseUrl));
+        // Validation
+        if (!appId || !rcNum) {
+            alert("कृपया App ID और राशन कार्ड नंबर दोनों भरें!");
+            return;
+        }
+        if (isNaN(startLimit) || isNaN(endLimit) || startLimit > endLimit) {
+            alert("कृपया सही शुरुआती और अंतिम नंबर डालें (Start नंबर, End नंबर से बड़ा नहीं हो सकता)!");
+            return;
+        }
+        if (endLimit - startLimit > 5000) {
+            if (!confirm("आप 5000 से अधिक लिंक जनरेट करने जा रहे हैं, इससे ब्राउज़र धीमा हो सकता है। क्या आप जारी रखना चाहते हैं?")) {
+                return;
+            }
         }
 
-        // सभी थ्रेड्स के खत्म होने का इंतज़ार
-        await Promise.all(workers);
+        // UI Update
+        genBtn.disabled = true;
+        genBtn.innerText = "प्रोसेसिंग हो रही है...";
+        statusMsg.innerHTML = "<span style='color:blue;'>लिंक्स बन रहे हैं, कृपया प्रतीक्षा करें...</span>";
+        resultBox.innerHTML = "";
+        generatedLinksText = "";
 
-        if (!isFound) {
-            document.getElementById('logBox').innerHTML = `<span style="color:#f38ba8;">स्कैन पूरा हुआ! 1 से ${maxLimit} के बीच कोई मैच नहीं मिला।</span><br>` + document.getElementById('logBox').innerHTML;
-        }
-        
-        btn.disabled = false;
-        btn.innerText = "⚡ हाई-स्पीड स्कैनिंग शुरू करें";
-        activeWorkers = 0;
-        updateStats();
+        // Use setTimeout to allow the UI to update before the heavy loop starts
+        setTimeout(() => {
+            const baseUrl = "https://nfsa.up.gov.in/Food/TrackingRationCard/ViewRC.aspx?Details=";
+            let linksArray = [];
+            let textArray = [];
+
+            for (let i = startLimit; i <= endLimit; i++) {
+                let fpsCode = String(i).padStart(8, '0'); 
+                let rawText = `${appId}#${fpsCode}#${rcNum}`;
+                
+                // Base64 + URL Encode
+                let b64 = btoa(rawText);
+                let encodedDetails = encodeURIComponent(b64);
+                let fullUrl = baseUrl + encodedDetails;
+
+                linksArray.push(`
+                    <div class="link-item">
+                        <span>सीरियल नंबर: <b>${fpsCode}</b></span>
+                        <a href="${fullUrl}" target="_blank">यहाँ क्लिक करके चेक करें ➔</a>
+                    </div>
+                `);
+                textArray.push(fullUrl);
+            }
+
+            // Fast rendering
+            resultBox.innerHTML = linksArray.join("");
+            generatedLinksText = textArray.join("\n");
+            
+            // Reset UI
+            statusMsg.innerHTML = `<span style='color:green;'>✅ सफलतापूर्वक ${linksArray.length} लिंक जनरेट हो गए!</span>`;
+            genBtn.disabled = false;
+            genBtn.innerText = "सारे लिंक जनरेट करें";
+            copyBtn.disabled = false;
+        }, 50);
     }
 
-    function updateStats() {
-        document.getElementById("stat-scanned").innerText = `चेक किए गए: ${scannedCount}`;
-        document.getElementById("stat-active").innerText = `एक्टिव थ्रेड्स: ${activeWorkers}`;
-    }
-
-    function showSuccess(fpsCode, fullUrl) {
-        document.getElementById('logBox').innerHTML = `<span style="color: #f9e2af; font-size: 16px; font-weight: bold;">🎉 मैच मिल गया! कोटेदार कोड: ${fpsCode}</span><br>` + document.getElementById('logBox').innerHTML;
+    function copyAllLinks() {
+        if (!generatedLinksText) return;
         
-        let successBox = document.getElementById('successBox');
-        let successText = document.getElementById('successText');
-        let successLink = document.getElementById('successLink');
-
-        successText.innerHTML = `✅ सफलता! सही सीरियल नंबर: <br><span style="font-size:24px; color:#1e1e2e;">${fpsCode}</span>`;
-        successLink.href = fullUrl;
-        successBox.style.display = "block";
+        navigator.clipboard.writeText(generatedLinksText).then(() => {
+            alert("सभी लिंक्स सफलतापूर्वक कॉपी हो गए!");
+        }).catch(err => {
+            alert("कॉपी करने में त्रुटि: " + err);
+        });
     }
 </script>
 
