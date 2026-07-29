@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fast Ration Card Finder</title>
+    <title>Fast Ration Card Finder (Turbo)</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
         .container { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: auto; }
-        h2 { text-align: center; color: #333; }
+        h2 { text-align: center; color: #d9534f; }
         label { font-weight: bold; margin-top: 10px; display: block; }
         input { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; background: #28a745; color: white; border: none; padding: 10px; font-size: 16px; border-radius: 4px; cursor: pointer; }
+        button { width: 100%; background: #d9534f; color: white; border: none; padding: 10px; font-size: 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         button:disabled { background: #6c757d; }
-        #log-box { margin-top: 20px; padding: 10px; background: #e9ecef; border-radius: 4px; height: 200px; overflow-y: auto; font-size: 14px; }
+        #log-box { margin-top: 20px; padding: 10px; background: #222; color: #0f0; border-radius: 4px; height: 250px; overflow-y: auto; font-size: 13px; font-family: monospace; }
         .success { color: green; font-weight: bold; font-size: 18px; margin-top: 15px; }
         .link { display: block; margin-top: 10px; color: blue; text-decoration: underline; word-break: break-all; }
     </style>
@@ -20,7 +20,7 @@
 <body>
 
 <div class="container">
-    <h2>राशन कार्ड सीरियल फाइंडर</h2>
+    <h2>⚡ टर्बो राशन कार्ड फाइंडर ⚡</h2>
     
     <label>एप्लीकेशन ID (App ID):</label>
     <input type="text" id="appId" value="0919000960190621">
@@ -31,7 +31,7 @@
     <label>कहाँ तक चेक करना है? (Max):</label>
     <input type="number" id="maxLimit" value="1500">
 
-    <button id="startBtn" onclick="startSearch()">खोजना शुरू करें</button>
+    <button id="startBtn" onclick="startSearch()">खोजना शुरू करें (Fast Mode)</button>
 
     <div id="log-box">सिस्टम तैयार है...<br></div>
     <div id="result"></div>
@@ -39,6 +39,30 @@
 
 <script>
     let isRunning = false;
+
+    // एक सिंगल लिंक को चेक करने का फंक्शन
+    async function checkSingle(i, appId, rcNum, baseUrl) {
+        let fpsCode = String(i).padStart(8, '0');
+        let rawText = `${appId}#${fpsCode}#${rcNum}`;
+        let b64 = btoa(rawText);
+        let encodedDetails = encodeURIComponent(b64);
+        let fullUrl = baseUrl + encodedDetails;
+
+        // फास्ट प्रॉक्सी का इस्तेमाल (Corsproxy.io)
+        let proxyUrl = `https://corsproxy.io/?${encodeURIComponent(fullUrl)}`;
+
+        try {
+            let response = await fetch(proxyUrl);
+            let text = await response.text();
+            
+            if (text.includes(rcNum)) {
+                return { found: true, index: i, url: fullUrl };
+            }
+        } catch (error) {
+            // एरर इग्नोर करें
+        }
+        return { found: false, index: i };
+    }
 
     async function startSearch() {
         let appId = document.getElementById("appId").value;
@@ -55,52 +79,47 @@
 
         isRunning = true;
         btn.disabled = true;
-        btn.innerText = "खोज चल रही है...";
-        logBox.innerHTML = "खोज शुरू हो गई है... कृपया ब्राउज़र बंद न करें।<br><br>";
+        btn.innerText = "⚡ खोज चल रही है...";
+        logBox.innerHTML = "सुपरफास्ट मोड शुरू हो गया है...<br><br>";
         resultBox.innerHTML = "";
 
         const baseUrl = "https://nfsa.up.gov.in/Food/TrackingRationCard/ViewRC.aspx?Details=";
+        
+        const batchSize = 10; // एक साथ 10 रिक्वेस्ट भेजेगा
 
-        for (let i = 1; i <= maxLimit; i++) {
+        for (let i = 1; i <= maxLimit; i += batchSize) {
             if (!isRunning) break;
 
-            let fpsCode = String(i).padStart(8, '0'); // जैसे 00000001
-            let rawText = `${appId}#${fpsCode}#${rcNum}`;
-            
-            // Base64 & URL Encoding
-            let b64 = btoa(rawText);
-            let encodedDetails = encodeURIComponent(b64);
-            let fullUrl = baseUrl + encodedDetails;
+            logBox.innerHTML = `सीरियल <b>${i} से ${Math.min(i + batchSize - 1, maxLimit)}</b> एक साथ चेक हो रहे हैं...<br>` + logBox.innerHTML;
 
-            // CORS Bypass Proxy (AllOrigins)
-            let proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(fullUrl)}`;
+            // 10 लिंक्स एक साथ तैयार करना
+            let promises = [];
+            for (let j = 0; j < batchSize && (i + j) <= maxLimit; j++) {
+                promises.push(checkSingle(i + j, appId, rcNum, baseUrl));
+            }
 
-            logBox.innerHTML = `सीरियल नंबर <b>${i}</b> चेक हो रहा है...<br>` + logBox.innerHTML;
+            // 10 लिंक्स को एक ही समय (Parallel) पर सर्वर पर भेजना
+            let results = await Promise.all(promises);
 
-            try {
-                let response = await fetch(proxyUrl);
-                let data = await response.json();
-
-                // चेक करना कि पेज में राशन कार्ड नंबर है या नहीं
-                if (data.contents && data.contents.includes(rcNum)) {
-                    logBox.innerHTML = `<b>✅ सफलता!</b><br>` + logBox.innerHTML;
+            // रिजल्ट चेक करना
+            for (let res of results) {
+                if (res.found) {
+                    logBox.innerHTML = `<span style="color: yellow;"><b>✅ सफलता! डेटा मिल गया।</b></span><br>` + logBox.innerHTML;
                     resultBox.innerHTML = `
-                        <div class="success">✅ मैच मिल गया! कोटेदार कोड: ${i}</div>
-                        <a class="link" href="${fullUrl}" target="_blank">यहाँ क्लिक करके अपना राशन कार्ड खोलें</a>
+                        <div class="success">✅ मैच मिल गया! कोटेदार कोड: ${res.index}</div>
+                        <a class="link" href="${res.url}" target="_blank">यहाँ क्लिक करके अपना राशन कार्ड खोलें</a>
                     `;
                     isRunning = false;
                     break;
                 }
-            } catch (error) {
-                logBox.innerHTML = `सीरियल ${i} पर नेटवर्क एरर...<br>` + logBox.innerHTML;
             }
-
-            // IP ब्लॉक होने से बचाने के लिए 1 सेकंड का गैप
-            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         btn.disabled = false;
-        btn.innerText = "खोजना शुरू करें";
+        if(isRunning) {
+            logBox.innerHTML = `खोज पूरी हुई। कोई मैच नहीं मिला।<br>` + logBox.innerHTML;
+        }
+        btn.innerText = "खोजना शुरू करें (Fast Mode)";
     }
 </script>
 
